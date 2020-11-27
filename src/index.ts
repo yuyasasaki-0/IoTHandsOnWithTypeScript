@@ -1,5 +1,4 @@
 import AWS from 'aws-sdk'
-import { PutRecordsOutput, PutRecordsResultEntry } from 'aws-sdk/clients/kinesis'
 
 const REGION = 'ap-northeast-1'
 const TABLE_NAME = process.env.TABLE_NAME === undefined ? '' : process.env.TABLE_NAME
@@ -70,12 +69,21 @@ const dynamoBulkPut = (dataArray: string[]): void => {
   }
 }
 
-// todo: 型情報はそれっぽいやつを選んだだけなので、いい感じにしたい。（Kinesisからのデータの型は存在しない？）
-const handler = (event: PutRecordsOutput): string => {
-  const decodedKinesisDataArray = event.Records.map((record: PutRecordsResultEntry) => {
+// Kinesisからのデータの型情報はAWS SDKには存在しないっぽいので独自に定義
+interface KinesisRecord {
+  kinesis: {
+    data: string
+  }
+}
+
+interface KinesisEventType {
+  Records: KinesisRecord[]
+}
+
+const handler = (event: KinesisEventType): string => {
+  const decodedKinesisDataArray = event.Records.map((record) => {
     // Kinesis data is base64 encoded so decode here
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    const payload = Buffer.from((record as any).kinesis.data, 'base64').toString('ascii')
+    const payload = Buffer.from(record.kinesis.data, 'base64').toString('ascii')
     console.log('Decoded payload:', payload)
     return payload
   })
