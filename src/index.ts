@@ -2,7 +2,7 @@ import AWS from 'aws-sdk'
 import { PutRecordsOutput, PutRecordsResultEntry } from 'aws-sdk/clients/kinesis'
 
 const REGION = 'ap-northeast-1'
-const TABLE_NAME = process.env.table === undefined ? '' : process.env.table
+const TABLE_NAME = process.env.TABLE_NAME === undefined ? '' : process.env.TABLE_NAME
 const DDB_PRIMARY_KEY = 'deviceid'
 const DDB_SORT_KEY = 'timestamp'
 
@@ -38,8 +38,8 @@ const convertData = (strData: string): dynamoDBPutDataInterface => {
       [DDB_SORT_KEY]: {
         S: payloadObject.TIMESTAMP
       },
-      HUMIDITY: { N: payloadObject.HUMIDITY },
-      TEMPERATURE: { N: payloadObject.TEMPERATURE }
+      HUMIDITY: { N: payloadObject.HUMIDITY.toString() },
+      TEMPERATURE: { N: payloadObject.TEMPERATURE.toString() }
     }
   }
   console.log(`putData: ${JSON.stringify(putData)}`)
@@ -70,6 +70,7 @@ const dynamoBulkPut = (dataArray: string[]): void => {
   }
 }
 
+// todo: 型情報はそれっぽいやつを選んだだけなので、いい感じにしたい。（Kinesisからのデータの型は存在しない？）
 const handler = (event: PutRecordsOutput): string => {
   const decodedKinesisDataArray = event.Records.map((record: PutRecordsResultEntry) => {
     // Kinesis data is base64 encoded so decode here
